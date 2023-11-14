@@ -9,82 +9,155 @@ set seed for reproducibility
 set.seed(12345) 
 ```
 
-### z score function
-
-Z scores subtract the mean and divide by the sd
+### lists
 
 ``` r
-x_vec = rnorm(20, mean = 5, sd = .3)
+vec_numeric = 1:4
+vec_char = c("my", "name", "is", "jeff")
+
+tibble(
+  num = vec_numeric,
+  char = vec_char
+)
 ```
 
-compute Z scores for `x_vec`
+    ## # A tibble: 4 × 2
+    ##     num char 
+    ##   <int> <chr>
+    ## 1     1 my   
+    ## 2     2 name 
+    ## 3     3 is   
+    ## 4     4 jeff
+
+different stuff with different lengths
 
 ``` r
-(x_vec - mean(x_vec)) / sd(x_vec)
+vec_numeric = 1:5
+vec_char = LETTERS
 ```
 
-    ##  [1]  0.6103734  0.7589907 -0.2228232 -0.6355576  0.6347861 -2.2717259
-    ##  [7]  0.6638185 -0.4229355 -0.4324994 -1.1941438 -0.2311505  2.0874460
-    ## [13]  0.3526784  0.5320552 -0.9917420  0.8878182 -1.1546150 -0.4893597
-    ## [19]  1.2521303  0.2664557
-
-write a function to do this!
+but if we do it as a list
 
 ``` r
-z_score = function(x) {
+l = 
+  list(
+    vec_numeric = 1:5,
+    vec_char = LETTERS,
+    matrix = matrix(1:10, nrow = 5, ncol = 2),
+    summary = summary(rnorm(100))
+  )
+```
+
+accessing lists
+
+``` r
+l$vec_char
+```
+
+    ##  [1] "A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "N" "O" "P" "Q" "R" "S"
+    ## [20] "T" "U" "V" "W" "X" "Y" "Z"
+
+``` r
+l[[2]]
+```
+
+    ##  [1] "A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "N" "O" "P" "Q" "R" "S"
+    ## [20] "T" "U" "V" "W" "X" "Y" "Z"
+
+``` r
+l[["summary"]]
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ## -2.3804 -0.5901  0.4837  0.2452  0.9004  2.4771
+
+### loops
+
+``` r
+list_norm_samples = 
+  list(
+    a = rnorm(10, 1, 5),
+    b = rnorm(20, 0, 7),
+    c = rnorm(20, 20, 1),
+    d = rnorm(20, -45, 13)
+  )
+```
+
+mean and sd function
+
+``` r
+mean_and_sd = function(x) { 
   
-  if(!is.numeric(x)) {
-    stop("Argument should be numbers")
+  if (!is.numeric(x)) {
+    stop("argument should be numbers")
   } else if (length(x) < 2) {
-    stop("Z scores cannot be computed for length 1 vectors")
+    stop("you need at least 2 numbers to get z scores")
   }
-  z = (x - mean(x))/ sd(x)
   
-  z
+  mean_x = mean(x) 
+  sd_x = sd(x)
+  
+  tibble(
+    mean = mean_x,
+    sd = sd_x
+  )
+    }
+```
+
+``` r
+mean_and_sd(list_norm_samples$a)
+```
+
+    ## # A tibble: 1 × 2
+    ##    mean    sd
+    ##   <dbl> <dbl>
+    ## 1 0.444  4.19
+
+``` r
+mean_and_sd(list_norm_samples$b)
+```
+
+    ## # A tibble: 1 × 2
+    ##    mean    sd
+    ##   <dbl> <dbl>
+    ## 1 0.441  8.90
+
+``` r
+mean_and_sd(list_norm_samples$c)
+```
+
+    ## # A tibble: 1 × 2
+    ##    mean    sd
+    ##   <dbl> <dbl>
+    ## 1  20.0  1.14
+
+``` r
+mean_and_sd(list_norm_samples$d)
+```
+
+    ## # A tibble: 1 × 2
+    ##    mean    sd
+    ##   <dbl> <dbl>
+    ## 1 -46.5  11.0
+
+trying to write it as a for loop instead
+
+``` r
+output = vector("list", length = 4)
+
+for (i in 1:4) {
+  
+  output[[i]] = mean_and_sd(list_norm_samples[[i]])
   
 }
 ```
 
-check that this works
+### use `map`
 
 ``` r
-z_score(x = x_vec)
+output = map(list_norm_samples, mean_and_sd)
+
+##can use different variables too 
+
+output = map(list_norm_samples, summary)
 ```
-
-    ##  [1]  0.6103734  0.7589907 -0.2228232 -0.6355576  0.6347861 -2.2717259
-    ##  [7]  0.6638185 -0.4229355 -0.4324994 -1.1941438 -0.2311505  2.0874460
-    ## [13]  0.3526784  0.5320552 -0.9917420  0.8878182 -1.1546150 -0.4893597
-    ## [19]  1.2521303  0.2664557
-
-``` r
-z_score(x = rnorm(10, mean = 5))
-```
-
-    ##  [1]  0.5952213  1.1732833 -0.6221352 -1.3990896 -1.4371950  1.4719158
-    ##  [7] -0.4830567  0.4590828  0.4520244 -0.2100512
-
-keep checking
-
-``` r
-z_score(x = 3)
-```
-
-    ## Error in z_score(x = 3): Z scores cannot be computed for length 1 vectors
-
-``` r
-z_score(c("my", "name", "is", "jeff"))
-```
-
-    ## Error in z_score(c("my", "name", "is", "jeff")): Argument should be numbers
-
-``` r
-z_score(c(TRUE, TRUE, FALSE, TRUE))
-```
-
-    ## Error in z_score(c(TRUE, TRUE, FALSE, TRUE)): Argument should be numbers
-
-``` r
-z_score(iris)
-```
-
-    ## Error in z_score(iris): Argument should be numbers
